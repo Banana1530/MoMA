@@ -1,0 +1,60 @@
+# DO NOT CHANGE the "init" and "install" sections below
+
+# Download script file from GitHub
+init:
+  ps: |
+        $ErrorActionPreference = "Stop"
+        Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
+        Import-Module '..\appveyor-tool.ps1'
+
+install:
+  ps: Bootstrap
+
+cache:
+  - C:\RLibrary
+
+environment:
+  NOT_CRAN: true
+  APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4+Qhoge2Qx6Xe0B4darHWCS9QVLA64mmZDE0DXMzAEu8R8ehiMPY1xqID4zUZjXysDQwfU0nTwRPx+zxFOAWDbO9B2bFbKYpo6CORGvKrdqNx/iM3KF43aO685Ic9rh5iOrZAEzR7KSUCeO6elmgWV6hVTTuSsgHY3ryqM93hlHaA5FI0lGMsD2uHiDAsjfqZAZV1UM6FRZ15sP1AzxQXnGafrbwtP6sckN09QDeXtIj2bhVtubMH3I1Nf7a0pXyPU/YFzva5R8ltMnGjJ7QP06sNRjDLWRwjy2r1irIBRiV5je6Y5VoOywIMKkr2dtLrGSIhsmUlP6I9oQ3r6I0d
+  APPVEYOR_SSH_BLOCK: TRUE
+  # env vars that may need to be set, at least temporarily, from time to time
+  # see https://github.com/krlmlr/r-appveyor#readme for details
+  # USE_RTOOLS: true
+  # R_REMOTES_STANDALONE: true
+
+# Adapt as necessary starting from her
+
+build_script:
+  - travis-tool.sh install_deps
+
+test_script:
+  - travis-tool.sh run_tests
+
+on_failure:
+  - 7z a failure.zip *.Rcheck\*
+  - appveyor PushArtifact failure.zip
+
+artifacts:
+  - path: '*.Rcheck\**\*.log'
+    name: Logs
+
+  - path: '*.Rcheck\**\*.out'
+    name: Logs
+
+  - path: '*.Rcheck\**\*.fail'
+    name: Logs
+
+  - path: '*.Rcheck\**\*.Rout'
+    name: Logs
+
+  - path: '\*_*.tar.gz'
+    name: Bits
+
+  - path: '\*_*.zip'
+    name: Bits
+
+skip_branch_with_pr: true
+
+on_finish:
+  - sh: export APPVEYOR_SSH_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
