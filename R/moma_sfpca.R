@@ -546,6 +546,166 @@ SFPCA <- R6::R6Class("SFPCA",
                 V = V,
                 PV = PV
             ))
+        },
+
+        plot = function() {
+            shinyApp(
+                ui = fluidPage(
+                    tags$style(
+                        type = "text/css",
+                        ".recalculating { opacity: 1.0; }"
+                    ),
+                    titlePanel("Sparse and functional PCA"),
+                    sidebarLayout(
+                        sidebarPanel(
+                            width = 2,
+                            sliderInput(
+                                "alpha_u_i",
+                                "alpha_u",
+                                min = 1,
+                                max = ifelse(self$fixed_list$is_alpha_u_fixed,
+                                    1, length(self$alpha_u)
+                                ),
+                                value = 1,
+                                step = 1
+                            ),
+                            sliderInput(
+                                "alpha_v_i",
+                                "alpha_v",
+                                min = 1,
+                                max = ifelse(self$fixed_list$is_alpha_v_fixed,
+                                    1, length(self$alpha_v)
+                                ),
+                                value = 1,
+                                step = 1
+                            ),
+                            sliderInput(
+                                "lambda_u_i",
+                                "lambda_u",
+                                min = 1,
+                                max = ifelse(self$fixed_list$is_lambda_u_fixed,
+                                    1, length(self$lambda_u)
+                                ),
+                                value = 1,
+                                step = 1
+                            ),
+                            sliderInput(
+                                "lambda_v_i",
+                                "lambda_v",
+                                min = 1,
+                                max = ifelse(self$fixed_list$is_lambda_v_fixed,
+                                    1, length(self$lambda_v)
+                                ),
+                                value = 1,
+                                step = 1
+                            )
+                        ),
+                        mainPanel(
+                            tabsetPanel(
+                                tabPanel(
+                                    "Loadings of PCs",
+                                    fluidRow(
+                                        column(
+                                            width = 2,
+                                            radioButtons("rank", "Rank", seq(1, self$rank))
+                                        ),
+                                        column(width = 5, plotOutput("u_loadings_plot")),
+                                        column(width = 5, plotOutput("v_loadings_plot"))
+                                    ),
+                                    fluidRow(
+                                        column(4, verbatimTextOutput("alpha_u")),
+                                        column(4, verbatimTextOutput("lambda_u")),
+                                        column(4, verbatimTextOutput("alpha_v")),
+                                        column(4, verbatimTextOutput("lambda_v"))
+                                    )
+                                ),
+                                tabPanel(
+                                    "Projected data",
+                                    fluidRow(
+                                        column(width = 6, plotOutput("X_rows_projected")),
+                                        column(width = 6, plotOutput("X_cols_projected"))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                server = function(input, output) {
+                    get_rank_k_result <- reactive({
+                        private$private_get_mat_by_index(
+                            alpha_u = input$alpha_u_i,
+                            alpha_v = input$alpha_v_i,
+                            lambda_u = input$lambda_u_i,
+                            lambda_v = input$lambda_v_i
+                        )
+                    })
+
+                    get_left_projected <- reactive({
+                        private$private_left_project(
+                            newX = self$X,
+                            alpha_u = input$alpha_u_i,
+                            alpha_v = input$alpha_v_i,
+                            lambda_u = input$lambda_u_i,
+                            lambda_v = input$lambda_v_i,
+                            rank = 2
+                        )
+                    })
+
+                    # plot the singuler vector
+                    output$v_loadings_plot <- renderPlot({
+                        k <- as.integer(input$rank)
+                        rank_k_result <- get_rank_k_result()
+                        plot(rank_k_result$V[, k],
+                            ylab = "v",
+                            type = "l",
+                            xaxt = "n",
+                            main = "Loadings of PCs",
+                            xlab = "X features"
+                        )
+                        axis(1,
+                            at = 1:self$p,
+                            labels = self$X_coln
+                        )
+                    })
+
+                    # plot the singuler vector
+                    output$u_loadings_plot <- renderPlot({
+                        k <- as.integer(input$rank)
+                        rank_k_result <- get_rank_k_result()
+                        plot(rank_k_result$U[, k],
+                            ylab = "u",
+                            type = "l"
+                        )
+                    })
+
+                    output$lambda_v <- renderPrint({
+                        k <- as.integer(input$rank)
+
+                        alpha_u_value <- get_rank_k_result()$chosen_alpha_u[k]
+                        cat(paste0("alpha_u = ", alpha_u_value), "\n")
+                        alpha_v_value <- get_rank_k_result()$chosen_alpha_v[k]
+                        cat(paste0("alpha_v = ", alpha_v_value), "\n")
+                        lambda_u_value <- get_rank_k_result()$chosen_lambda_u[k]
+                        cat(paste0("lambda_u = ", lambda_u_value), "\n")
+                        lambda_v_value <- get_rank_k_result()$chosen_lambda_v[k]
+                        cat(paste0("lambda_v = ", lambda_v_value), "\n")
+                    })
+
+                    output$X_rows_projected <- renderPlot({
+                        X_projected <- get_left_projected()$proj_data
+                        # print(X_projected)
+                        plot(X_projected,
+                            xlab = "PC1",
+                            ylab = "PC2",
+                            main = "Projected rows of the data matrix"
+                        )
+                    })
+
+                    output$X_cols_projected <- renderPlot({
+
+                    })
+                }
+            )
         }
     )
 )
