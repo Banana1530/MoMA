@@ -78,7 +78,7 @@ is_square <- function(x) {
     is.matrix(x) && (NROW(x) == NCOL(x))
 }
 is_factor <- function(a) {
-    return(is.finite(a) && is.factor(a))
+    return(is.factor(a) && all(is.finite(a)))
 }
 
 error_if_not_of_class <- function(x, cl) {
