@@ -281,6 +281,7 @@ int MoMA::deflate()
     else
     {
         MoMALogger::error("Wrong defaltion scheme.");
+        return -1;
     }
 }
 
@@ -407,9 +408,12 @@ int MoMA::reset_X()
     {
         X_working = X_original;
         X         = X_working.t() * Y_original;
+        initialize_uv();
+        return 0;
     }
     else
     {
         MoMALogger::error("MoMA::reset_X for other modes not implemented.");
+        return -1;
     }
 }

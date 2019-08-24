@@ -247,6 +247,7 @@ int L1TrendFiltering::df(const arma::vec &x)
     if (k == 0)
     {
         MoMALogger::error("Please use fused lasso instead.");
+        return -1;
     }
     else if (k == 1)
     {

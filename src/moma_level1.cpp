@@ -13,6 +13,11 @@ const arma::vec &construct_grid_for_search(const arma::vec &grid, SelectionSchem
     {
         return MOMA_EMPTY_GRID_OF_LENGTH1;
     }
+    else
+    {
+        MoMALogger::error("Unknown selection scheme in `construct_grid_for_search`.");
+        return MOMA_EMPTY_GRID_OF_LENGTH1;
+    }
 }
 
 arma::vec construct_grid_no_search(const arma::vec &grid, SelectionScheme ss, int i)
@@ -24,6 +29,11 @@ arma::vec construct_grid_no_search(const arma::vec &grid, SelectionScheme ss, in
     else if (ss == SelectionScheme::grid)
     {
         return grid(i) * arma::ones<arma::vec>(1);
+    }
+    else
+    {
+        MoMALogger::error("Unknown selection scheme in `construct_grid_no_search`.");
+        return MOMA_EMPTY_GRID_OF_LENGTH1;
     }
 }
 
